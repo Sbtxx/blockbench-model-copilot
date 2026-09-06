@@ -4,7 +4,7 @@
     'use strict';
 
     const PLUGIN_ID = 'blockbench_model_copilot';
-    const VERSION = '0.3.0';
+    const VERSION = '0.3.1';
     const STORAGE_KEY = 'mikonode_ai_config_v3';
     const MAX_OPERATIONS = 80;
     const MAX_PROMPT = 10000;
@@ -276,9 +276,12 @@
             }
             if (Array.isArray(target.origin)) target.origin = target.origin.map((v, i) => v + op.delta[i]);
         } else if (op.type === 'escalar' && Array.isArray(target.from) && Array.isArray(target.to)) {
-            const center = target.from.map((v, i) => (v + target.to[i]) / 2);
-            target.from = center.map((v, i) => v - ((target.to[i] - target.from[i]) * op.escala[i]) / 2);
-            target.to = center.map((v, i) => v + ((target.to[i] - target.from[i]) * op.escala[i]) / 2);
+            const from = target.from.slice();
+            const to = target.to.slice();
+            const center = from.map((v, i) => (v + to[i]) / 2);
+            const half = from.map((v, i) => ((to[i] - v) * op.escala[i]) / 2);
+            target.from = center.map((v, i) => v - half[i]);
+            target.to = center.map((v, i) => v + half[i]);
         } else if (op.type === 'rotar' && Array.isArray(target.rotation)) {
             target.rotation = op.rotacion.slice();
         } else if (op.type === 'renombrar') {
@@ -351,7 +354,7 @@
             cube('superior', 'superior', [-4, 10, -2], [4, 18, 2], [0, 10, 0]);
             cube('detalle', 'detalle', [-2, 18, -1], [2, 22, 1], [0, 18, 0]);
         }
-        return validateBlueprint({ titulo: `Mikonode — ${kind}`, resumen: 'Plan local de respaldo listo para aplicar.', estilo: 'Minecraft / low-poly', operaciones });
+        return validateBlueprint({ titulo: `Mikonode — ${kind}`, resumen: 'Plan local de respaldo listo para aplicar.', estilo: 'Minecraft / low-poly', operaciones: operations });
     }
 
     function makeReferenceDataUrl(file) {
@@ -371,6 +374,7 @@
                     canvas.width = width;
                     canvas.height = height;
                     const ctx = canvas.getContext('2d');
+                    if (!ctx) return reject(new Error('No se pudo preparar la referencia.'));
                     ctx.drawImage(source, 0, 0, width, height);
                     resolve(canvas.toDataURL('image/jpeg', 0.86));
                 };
@@ -606,6 +610,7 @@
     }
 
     function removeReference(index) {
+        if (!Number.isInteger(index) || index < 0 || index >= state.references.length) return;
         state.references.splice(index, 1);
         renderPanel();
     }
@@ -657,7 +662,7 @@
             },
             lines: [
                 '<div style="line-height:1.5; opacity:.82">Mikonode no usa una API key compartida. Cada usuario debe aportar sus propias credenciales. Las referencias se reducen y se envían solo al proveedor cuando la opción está activa.</div>',
-                '<div style="margin-top:8px; opacity:.68">Para OpenAI, los modelos actuales con visión funcionan con la Responses API; puedes cambiar el modelo manualmente cuando el proveedor lo requiera.</div>'
+                '<div style="margin-top:8px; opacity:.68">Para OpenAI, puedes seleccionar un modelo compatible con la Responses API o cambiar de proveedor si usas un endpoint compatible.</div>'
             ],
             buttons: ['Guardar', 'Probar conexión', 'Cancelar'],
             confirmIndex: 0,

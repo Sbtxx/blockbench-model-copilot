@@ -4,7 +4,7 @@
     'use strict';
 
     const PLUGIN_ID = 'blockbench_model_copilot';
-    const VERSION = '0.3.1';
+    const VERSION = '0.3.2';
     const STORAGE_KEY = 'mikonode_ai_config_v3';
     const MAX_OPERATIONS = 80;
     const MAX_PROMPT = 10000;
@@ -354,7 +354,7 @@
             cube('superior', 'superior', [-4, 10, -2], [4, 18, 2], [0, 10, 0]);
             cube('detalle', 'detalle', [-2, 18, -1], [2, 22, 1], [0, 18, 0]);
         }
-        return validateBlueprint({ titulo: `Mikonode — ${kind}`, resumen: 'Plan local de respaldo listo para aplicar.', estilo: 'Minecraft / low-poly', operaciones: operations });
+        return validateBlueprint({ titulo: `Mikonode — ${kind}`, resumen: 'Plan local de respaldo listo para aplicar.', estilo: 'Minecraft / low-poly', operaciones });
     }
 
     function makeReferenceDataUrl(file) {
@@ -374,7 +374,7 @@
                     canvas.width = width;
                     canvas.height = height;
                     const ctx = canvas.getContext('2d');
-                    if (!ctx) return reject(new Error('No se pudo preparar la referencia.'));
+                    if (!ctx) return reject(new Error('No pude preparar la referencia.'));
                     ctx.drawImage(source, 0, 0, width, height);
                     resolve(canvas.toDataURL('image/jpeg', 0.86));
                 };
@@ -435,12 +435,10 @@
     async function callAi(mode, prompt) {
         const config = getConfig();
         if (!aiConfigured()) throw new Error('La IA no está configurada. Abre Herramientas → Configuración de Mikonode.');
-
         const userText = buildUserText(mode, prompt);
         const hasImages = state.references.length && config.sendImages;
         const inputContent = [{ type: 'input_text', text: userText }];
         if (hasImages && config.provider === 'openai_responses') inputContent.push(...referenceParts());
-
         let body;
         let parser;
         if (config.provider === 'openai_responses') {
@@ -466,13 +464,9 @@
             };
             parser = extractChatText;
         }
-
         const response = await fetchJson(config.endpoint, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${config.apiKey}`
-            },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${config.apiKey}` },
             body: JSON.stringify(body)
         }, config.timeoutMs);
         const raw = await response.text();
@@ -512,18 +506,7 @@
         const strengths = review?.fortalezas || review?.strengths || [];
         const problems = review?.problemas || review?.issues || [];
         const suggestions = review?.sugerencias || review?.suggestions || [];
-        return [
-            `ANÁLISIS DEL MODELO — ${score}/100`,
-            '',
-            'Fortalezas:',
-            strengths.length ? strengths.map(v => `• ${v}`).join('\n') : '• Ninguna detectada.',
-            '',
-            'Problemas:',
-            problems.length ? problems.map(v => `• ${v.mensaje || v.message}`).join('\n') : '• Ninguno detectado.',
-            '',
-            'Sugerencias:',
-            suggestions.length ? suggestions.map(v => `• ${v}`).join('\n') : '• El modelo va por buen camino.'
-        ].join('\n');
+        return ['ANÁLISIS DEL MODELO — ' + score + '/100', '', 'Fortalezas:', strengths.length ? strengths.map(v => `• ${v}`).join('\n') : '• Ninguna detectada.', '', 'Problemas:', problems.length ? problems.map(v => `• ${v.mensaje || v.message}`).join('\n') : '• Ninguno detectado.', '', 'Sugerencias:', suggestions.length ? suggestions.map(v => `• ${v}`).join('\n') : '• El modelo va por buen camino.'].join('\n');
     }
 
     async function handleAnalyze() {
@@ -560,19 +543,15 @@
                 else addMessage('assistant', 'Empieza por la silueta, continúa con proporciones, añade formas secundarias y termina con detalles.');
                 return;
             }
-
             let blueprint = null;
             if (aiConfigured()) {
-                try {
-                    blueprint = validateBlueprint(parseJson(await callAi('plan', trimmed)));
-                } catch (error) {
-                    addMessage('assistant', `La IA no produjo un plan válido (${error.message || error}). Usaré el generador local.`);
-                }
+                try { blueprint = validateBlueprint(parseJson(await callAi('plan', trimmed))); }
+                catch (error) { addMessage('assistant', `La IA no produjo un plan válido (${error.message || error}). Usaré el generador local.`); }
             }
             if (!blueprint) blueprint = localBlueprint(trimmed);
             state.lastPlan = blueprint;
             const imageNote = state.references.length ? `\nReferencias usadas: ${state.references.length}` : '';
-            addMessage('assistant', `${blueprint.titulo}\n\n${blueprint.resumen || 'Plan listo.'}\n\nOperaciones: ${blueprint.operaciones.length}${imageNote}\n\nRevisa el plan y pulsa «Aplicar plan».`);
+            addMessage('assistant', `${blueprint.titulo}\n\n${blueprint.resumen || 'Plan listo.'}\n\nOperaciones: ${blueprint.operaciones.length}${imageNote}${planSummary(blueprint)}\n\nRevisa el plan y pulsa «Aplicar plan».`);
         } catch (error) {
             addMessage('assistant', `Ocurrió un error: ${error.message || error}`);
         } finally {
@@ -610,7 +589,6 @@
     }
 
     function removeReference(index) {
-        if (!Number.isInteger(index) || index < 0 || index >= state.references.length) return;
         state.references.splice(index, 1);
         renderPanel();
     }
@@ -634,25 +612,17 @@
             const provider = prompt('Proveedor (openai_responses u openai_chat):', c.provider) || c.provider;
             const endpoint = prompt('Endpoint:', c.endpoint) || c.endpoint;
             const model = prompt('Modelo:', c.model) || c.model;
-            const apiKey = prompt('API key:', c.apiKey ? '******** (conservada)' : '') === null ? c.apiKey : (c.apiKey || prompt('API key nueva:', ''));
-            saveConfig({ ...c, enabled: true, provider, endpoint, model, apiKey });
+            const apiKey = prompt('API key (déjala vacía para conservar la actual):', '') ?? c.apiKey;
+            saveConfig({ ...c, enabled: true, provider, endpoint, model, apiKey: apiKey || c.apiKey });
             renderPanel();
             return;
         }
-
         if (settingsDialog) { settingsDialog.delete(); settingsDialog = null; }
         settingsDialog = new Dialog('mikonode_ai_settings', {
-            title: 'Mikonode — Configuración de IA',
-            icon: 'psychology',
-            width: 620,
-            resizable: 'y',
+            title: 'Mikonode — Configuración de IA', icon: 'psychology', width: 620, resizable: 'y',
             form: {
                 enabled: { label: 'Activar IA', type: 'checkbox', value: c.enabled },
-                provider: {
-                    label: 'Proveedor / formato', type: 'select',
-                    options: { 'openai_responses': 'OpenAI Responses', 'openai_chat': 'OpenAI Chat Completions / compatible' },
-                    value: c.provider
-                },
+                provider: { label: 'Proveedor / formato', type: 'select', options: { openai_responses: 'OpenAI Responses', openai_chat: 'OpenAI Chat Completions / compatible' }, value: c.provider },
                 endpoint: { label: 'Endpoint', type: 'text', value: c.endpoint },
                 model: { label: 'Modelo', type: 'text', value: c.model },
                 apiKey: { label: 'API key', type: 'text', value: c.apiKey, description: 'Se guarda localmente en Blockbench. Nunca la incluyas en GitHub.' },
@@ -662,42 +632,18 @@
             },
             lines: [
                 '<div style="line-height:1.5; opacity:.82">Mikonode no usa una API key compartida. Cada usuario debe aportar sus propias credenciales. Las referencias se reducen y se envían solo al proveedor cuando la opción está activa.</div>',
-                '<div style="margin-top:8px; opacity:.68">Para OpenAI, puedes seleccionar un modelo compatible con la Responses API o cambiar de proveedor si usas un endpoint compatible.</div>'
+                '<div style="margin-top:8px; opacity:.68">La integración está preparada para proveedores con entrada multimodal. El modelo se puede cambiar desde esta ventana.</div>'
             ],
-            buttons: ['Guardar', 'Probar conexión', 'Cancelar'],
-            confirmIndex: 0,
-            cancelIndex: 2,
+            buttons: ['Guardar', 'Probar conexión', 'Cancelar'], confirmIndex: 0, cancelIndex: 2,
             onButton(index) {
                 if (index === 1) {
                     const result = settingsDialog.getFormResult();
-                    const next = {
-                        ...c,
-                        enabled: Boolean(result.enabled),
-                        provider: String(result.provider || c.provider),
-                        endpoint: String(result.endpoint || c.endpoint).trim(),
-                        model: String(result.model || c.model).trim(),
-                        apiKey: String(result.apiKey || '').trim() || c.apiKey,
-                        timeoutMs: Math.max(8000, Number(result.timeoutMs) || 60000),
-                        sendModelSnapshot: Boolean(result.sendModelSnapshot),
-                        sendImages: Boolean(result.sendImages)
-                    };
-                    saveConfig(next);
+                    saveConfig({ ...c, enabled: Boolean(result.enabled), provider: String(result.provider || c.provider), endpoint: String(result.endpoint || c.endpoint).trim(), model: String(result.model || c.model).trim(), apiKey: String(result.apiKey || '').trim() || c.apiKey, timeoutMs: Math.max(8000, Number(result.timeoutMs) || 60000), sendModelSnapshot: Boolean(result.sendModelSnapshot), sendImages: Boolean(result.sendImages) });
                     return testConnection();
                 }
             },
             onConfirm(result) {
-                const next = {
-                    ...c,
-                    enabled: Boolean(result.enabled),
-                    provider: String(result.provider || c.provider),
-                    endpoint: String(result.endpoint || c.endpoint).trim(),
-                    model: String(result.model || c.model).trim(),
-                    apiKey: String(result.apiKey || '').trim() || c.apiKey,
-                    timeoutMs: Math.max(8000, Number(result.timeoutMs) || 60000),
-                    sendModelSnapshot: Boolean(result.sendModelSnapshot),
-                    sendImages: Boolean(result.sendImages)
-                };
-                saveConfig(next);
+                saveConfig({ ...c, enabled: Boolean(result.enabled), provider: String(result.provider || c.provider), endpoint: String(result.endpoint || c.endpoint).trim(), model: String(result.model || c.model).trim(), apiKey: String(result.apiKey || '').trim() || c.apiKey, timeoutMs: Math.max(8000, Number(result.timeoutMs) || 60000), sendModelSnapshot: Boolean(result.sendModelSnapshot), sendImages: Boolean(result.sendImages) });
                 addMessage('assistant', 'Configuración de IA guardada localmente.');
             }
         });
@@ -706,10 +652,7 @@
 
     function planSummary(plan) {
         if (!plan) return '';
-        const preview = plan.operaciones.slice(0, 10).map((op, index) => {
-            const subject = op.nombre || op.objetivo || op.id || 'pieza';
-            return `${index + 1}. ${op.type} → ${subject}`;
-        }).join('\n');
+        const preview = plan.operaciones.slice(0, 10).map((op, index) => `${index + 1}. ${op.type} → ${op.nombre || op.objetivo || op.id || 'pieza'}`).join('\n');
         const more = plan.operaciones.length > 10 ? `\n… y ${plan.operaciones.length - 10} más` : '';
         return `\n\nPLAN\n${preview}${more}`;
     }
@@ -723,8 +666,7 @@
                 <div class="mk-role">${message.role === 'assistant' ? 'MIKONODE' : 'TÚ'}</div>
                 <div class="mk-bubble">${escapeHtml(message.text).replace(/\n/g, '<br>')}</div>
             </div>`).join('');
-        const refs = state.references.length ? state.references.map((ref, index) => `
-            <div class="mk-ref"><span>🖼 ${escapeHtml(ref.name)}</span><button data-ref-remove="${index}" title="Quitar referencia">×</button></div>`).join('') : '<span class="mk-ref-empty">Sin referencias</span>';
+        const refs = state.references.length ? state.references.map((ref, index) => `<div class="mk-ref"><span>🖼 ${escapeHtml(ref.name)}</span><button data-ref-remove="${index}" title="Quitar referencia">×</button></div>`).join('') : '<span class="mk-ref-empty">Sin referencias</span>';
         const plan = state.lastPlan ? `<div class="mk-plan"><b>${escapeHtml(state.lastPlan.titulo)}</b><div>${escapeHtml(state.lastPlan.resumen || '')}</div><small>${state.lastPlan.operaciones.length} operaciones${planSummary(state.lastPlan)}</small></div>` : '';
         return `
             <div class="mk-panel">
@@ -757,10 +699,7 @@
         if (input) {
             input.addEventListener('input', event => { state.prompt = event.target.value; });
             input.addEventListener('keydown', event => {
-                if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
-                    event.preventDefault();
-                    handlePrompt(input.value);
-                }
+                if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); handlePrompt(input.value); }
             });
         }
         root.querySelectorAll('[data-ref-remove]').forEach(button => button.addEventListener('click', () => removeReference(Number(button.getAttribute('data-ref-remove')))));
@@ -769,13 +708,8 @@
             if (action === 'send') await handlePrompt(input?.value || state.prompt);
             else if (action === 'analyze') await handleAnalyze();
             else if (action === 'apply' && state.lastPlan) {
-                try {
-                    const count = applyBlueprint(state.lastPlan).length;
-                    state.lastPlan = null;
-                    addMessage('assistant', `Plan aplicado correctamente. Creé ${count} elementos.`);
-                } catch (error) {
-                    addMessage('assistant', `No pude aplicar el plan: ${error.message || error}`);
-                }
+                try { const count = applyBlueprint(state.lastPlan).length; state.lastPlan = null; addMessage('assistant', `Plan aplicado correctamente. Creé ${count} elementos.`); }
+                catch (error) { addMessage('assistant', `No pude aplicar el plan: ${error.message || error}`); }
             } else if (action === 'reference') openReferencePicker();
             else if (action === 'clear_refs') { state.references = []; renderPanel(); }
             else if (action === 'settings') openSettings();
@@ -793,7 +727,7 @@
         if (messages) messages.scrollTop = messages.scrollHeight;
     }
 
-    Plugin.register(PLUGIN_ID, {
+    Plugin.register('blockbench_model_copilot', {
         title: 'Mikonode',
         author: 'Sbtxx',
         description: 'Asistente de modelado con IA dentro de Blockbench.',
@@ -817,23 +751,12 @@
                 .mk-actions,.mk-quick{display:flex;gap:5px;flex-wrap:wrap;padding:7px 9px;border-top:1px solid var(--color-border)}.mk-actions button,.mk-quick button{flex:1;min-width:90px}
                 .mk-input{display:flex;gap:6px;padding:8px 9px 4px}.mk-input textarea{flex:1;min-height:58px;max-height:150px;resize:vertical;border:1px solid var(--color-border);background:var(--color-back);color:var(--color-text);border-radius:6px;padding:7px;font:inherit}.mk-input button{width:42px;align-self:stretch;font-size:16px}.mk-hint{padding:0 10px 8px;opacity:.45;font-size:10px}
             `);
-
-            panel = new Panel('mikonode_panel', {
-                name: 'Mikonode', icon: 'psychology', growable: true, resizable: true,
-                default_position: { slot: 'right_bar', height: 520 }
-            });
+            panel = new Panel('mikonode_panel', { name: 'Mikonode', icon: 'psychology', growable: true, resizable: true, default_position: { slot: 'right_bar', height: 520 } });
             renderPanel();
-
-            openAction = new Action('mikonode_open', {
-                name: 'Mikonode', icon: 'psychology', description: 'Abrir Mikonode', click() { panel?.selectTab(); }
-            });
+            openAction = new Action('mikonode_open', { name: 'Mikonode', icon: 'psychology', description: 'Abrir Mikonode', click() { panel?.selectTab(); } });
             MenuBar.addAction(openAction, 'tools');
-
-            settingsAction = new Action('mikonode_settings', {
-                name: 'Configuración de Mikonode', icon: 'settings', description: 'Configurar IA de Mikonode', click: openSettings
-            });
+            settingsAction = new Action('mikonode_settings', { name: 'Configuración de Mikonode', icon: 'settings', description: 'Configurar IA de Mikonode', click: openSettings });
             MenuBar.addAction(settingsAction, 'tools');
-
             imageInput = document.createElement('input');
             imageInput.type = 'file';
             imageInput.accept = 'image/png,image/jpeg,image/webp';
@@ -841,11 +764,9 @@
             imageInput.style.display = 'none';
             document.body.appendChild(imageInput);
             imageInput.addEventListener('change', () => handleReferenceFiles(imageInput.files));
-
             selectionListener = () => renderPanel();
             Blockbench.on('update_selection', selectionListener);
         },
-
         onunload() {
             if (openAction) openAction.delete();
             if (settingsAction) settingsAction.delete();
@@ -857,7 +778,6 @@
             panel = null; openAction = null; settingsAction = null; settingsDialog = null; selectionListener = null; styleSheet = null; imageInput = null;
             state.references = [];
         },
-
         oninstall() { Blockbench.showQuickMessage(`Mikonode ${VERSION} instalado`); }
     });
 })();

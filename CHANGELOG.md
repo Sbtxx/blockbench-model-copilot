@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented here.
 
+## [0.3.1] - 2026-09-06
+
+### Fixed
+
+- Fixed the offline/local blueprint generator using `operaciones` even though the local variable was named `operations`.
+- Bumped package/plugin version to `0.3.1` so Blockbench can distinguish the repaired build more easily.
+
 ## [0.3.0] - 2026-09-06
 
 ### Added
@@ -49,7 +56,6 @@ All notable changes to this project will be documented here.
 - AI provider layer using OpenAI-compatible chat-completions APIs.
 - Structured AI model blueprints instead of arbitrary generated code.
 - Blueprint validation and operation limits before modifying Blockbench.
-- Text-to-model planning with an explicit apply step.
 - Reference image attachment for vision-capable AI providers.
 - AI-assisted model review with score, strengths, issues, and suggestions.
 - AI-assisted teaching mode.

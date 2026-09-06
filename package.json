@@ -1,8 +1,8 @@
 {
   "name": "blockbench-model-copilot",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "Blockbench plugin that assists beginners with model creation, editing, analysis, and learning.",
+  "description": "AI-assisted Blockbench plugin for natural-language model planning, safe edits, reviews, and reference images.",
   "scripts": {
     "validate": "node scripts/validate.mjs"
   },

@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 
 const root = process.cwd();
 const pluginPath = path.join(root, 'plugins', 'blockbench_model_copilot', 'blockbench_model_copilot.js');
@@ -14,7 +15,7 @@ const source = fs.readFileSync(pluginPath, 'utf8');
 const required = [
     "Plugin.register('blockbench_model_copilot'",
     "title: 'Mikonode'",
-    "version: '0.2.1'",
+    "version: '0.3.0'",
     "min_version: '4.8.0'",
     "tags: ['Minecraft', 'Utility', 'AI']",
     "repository: 'https://github.com/Sbtxx/blockbench-model-copilot'",
@@ -22,7 +23,8 @@ const required = [
     'function applyBlueprint',
     'async function callAi',
     'function openReferencePicker',
-    'Configuración de Mikonode',
+    'function makeReferenceDataUrl',
+    "provider: 'openai_responses'",
     'onload() {',
     'onunload() {'
 ];
@@ -34,35 +36,14 @@ if (missing.length) {
     process.exit(1);
 }
 
-let braces = 0;
-let quote = null;
-let escaped = false;
-for (const char of source) {
-    if (escaped) {
-        escaped = false;
-        continue;
-    }
-    if (char === '\\') {
-        escaped = true;
-        continue;
-    }
-    if (quote) {
-        if (char === quote) quote = null;
-        continue;
-    }
-    if (char === '"' || char === "'" || char === '`') {
-        quote = char;
-        continue;
-    }
-    if (char === '{') braces++;
-    if (char === '}') braces--;
+const check = spawnSync(process.execPath, ['--check', pluginPath], { encoding: 'utf8' });
+if (check.status !== 0) {
+    console.error('Falló la comprobación de sintaxis de Node.js:');
+    console.error(check.stderr || check.stdout || 'Error desconocido');
+    process.exit(check.status || 1);
 }
 
-if (braces !== 0 || quote) {
-    console.error(`Falló la comprobación de sintaxis (${braces} llaves pendientes, cadena=${quote ?? 'ninguna'}).`);
-    process.exit(1);
-}
-
-console.log('La metadata y la estructura del plugin parecen válidas.');
+console.log('La metadata y la sintaxis del plugin son válidas.');
 console.log(`Plugin: ${pluginPath}`);
+console.log(`Versión: 0.3.0`);
 console.log(`Tamaño: ${source.length} caracteres`);

@@ -16,7 +16,7 @@ const required = [
     "Plugin.register(PLUGIN_ID",
     "const PLUGIN_ID = 'blockbench_model_copilot'",
     "title: 'Mikonode'",
-    "const VERSION = '0.3.0'",
+    "const VERSION = '0.3.1'",
     "min_version: '4.8.0'",
     "tags: ['Minecraft', 'Utility', 'AI']",
     "repository: 'https://github.com/Sbtxx/blockbench-model-copilot'",
@@ -26,6 +26,8 @@ const required = [
     'function openReferencePicker',
     'function makeReferenceDataUrl',
     "provider: 'openai_responses'",
+    'const operations = [',
+    'operaciones: operations',
     'onload() {',
     'onunload() {'
 ];
@@ -46,5 +48,5 @@ if (check.status !== 0) {
 
 console.log('La metadata y la sintaxis del plugin son válidas.');
 console.log(`Plugin: ${pluginPath}`);
-console.log('Versión: 0.3.0');
+console.log('Versión: 0.3.1');
 console.log(`Tamaño: ${source.length} caracteres`);

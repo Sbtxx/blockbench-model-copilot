@@ -1,6 +1,6 @@
 {
   "name": "blockbench-model-copilot",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "description": "Mikonode: AI-assisted Blockbench plugin for natural-language model planning, safe edits, reviews, and reference images.",
   "scripts": {

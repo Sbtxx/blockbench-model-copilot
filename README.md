@@ -1,102 +1,106 @@
-# 🧱 Blockbench Model Copilot
+# 🧱 Mikonode
 
-AI-assisted modeling directly inside [Blockbench](https://www.blockbench.net/).
+Asistente de modelado con IA dentro de [Blockbench](https://www.blockbench.net/).
 
-Model Copilot is designed for people who have an idea for a Minecraft-style model but do not know how to build it efficiently. The plugin turns natural-language requests and reference images into a structured, reviewable model plan and then applies only safe, predefined operations to the current Blockbench project.
+**Mikonode** está pensado para personas que tienen una idea para un modelo estilo Minecraft pero no saben cómo construirla eficientemente. El plugin convierte instrucciones en lenguaje natural y referencias visuales en un plan de modelo revisable y después aplica operaciones seguras y predefinidas al proyecto actual de Blockbench.
 
-## ✨ What it does
+> **Estado:** desarrollo activo · versión `0.2.1`
 
-- **Text → Model Plan** — describe a sword, creature, prop, weapon, character, or other blocky asset.
-- **Reference Image → Model Plan** — attach a sketch or reference image and use a vision-capable AI provider to guide the design.
-- **Plan → Blockbench** — create groups and cubes from the plan without executing arbitrary AI-generated JavaScript.
-- **Conversational editing** — move, resize, rename, or remove existing elements through structured operations.
-- **AI Model Review** — inspect the current project and get a score, strengths, issues, and suggestions.
-- **Teach Me** — ask for a modeling workflow or an explanation of how to build a specific asset.
-- **Offline fallback** — the plugin still provides deterministic starter models and basic guidance without an AI key.
+## ✨ Qué hace
 
-## 🧠 Architecture
+- **Texto → plan de modelo:** describe una espada, criatura, objeto, arma, personaje u otro asset de estilo bloqueado.
+- **Boceto/referencia → plan:** carga una imagen para que un proveedor de IA con visión ayude a interpretar el diseño.
+- **Plan → Blockbench:** crea grupos y cubos sin ejecutar JavaScript arbitrario generado por la IA.
+- **Edición conversacional:** mover, escalar, renombrar o eliminar elementos mediante operaciones controladas.
+- **Revisión del modelo:** analiza el proyecto y devuelve puntuación, fortalezas, problemas y sugerencias.
+- **Aprender a modelar:** explica procesos de modelado paso a paso.
+- **Modo local:** el plugin sigue funcionando con funciones básicas aunque no haya una API de IA configurada.
+- **Interfaz en español:** la experiencia principal del plugin está localizada al español.
+
+## 🧠 Arquitectura
 
 ```text
-User prompt / reference image
-            ↓
-      AI provider layer
-            ↓
-     Structured blueprint
-            ↓
-    Blueprint validation
-            ↓
-   Safe Blockbench operations
-            ↓
-       Editable model
+Texto / boceto
+      ↓
+Proveedor de IA
+      ↓
+Plan estructurado
+      ↓
+Validación
+      ↓
+Operaciones seguras de Blockbench
+      ↓
+Modelo 3D editable
 ```
 
-The AI is never allowed to execute arbitrary code. Model changes are limited to a small operation set such as `create_group`, `create_cube`, `move`, `resize`, `rename`, and `delete`.
+La IA no puede ejecutar código arbitrario. Los cambios están limitados a operaciones como `crear_grupo`, `crear_cubo`, `mover`, `escalar`, `renombrar` y `eliminar`.
 
-## 🤖 AI providers
+## 🤖 Configuración de IA
 
-The current implementation supports **OpenAI-compatible chat-completions endpoints**. In Blockbench open **Tools → Model Copilot Settings** and provide:
+La implementación admite endpoints compatibles con **OpenAI Chat Completions**. Dentro de Blockbench abre **Herramientas → Configuración de Mikonode** y configura:
 
-- Enable AI
-- Endpoint URL
-- Model name
+- Activar IA
+- URL del endpoint
+- Nombre del modelo
 - API key
-- Request timeout
-- Whether the model snapshot may be sent
+- Tiempo límite
+- Envío opcional del resumen del modelo
 
-The API key is stored in Blockbench local storage and is not committed to this repository.
+La API key se almacena en el almacenamiento local de Blockbench y no se incluye en este repositorio.
 
-Reference images require a provider/model that supports image input. The plugin sends the selected image as a data URL in the request.
+Las referencias de imagen requieren un proveedor/modelo que acepte entradas de imagen.
 
-## 🧪 Testing the plugin
+## 🧪 Probar el plugin
 
-Blockbench's plugin documentation supports testing a plugin by loading the JavaScript file from the plugin menu or dragging it into Blockbench.
+La documentación de Blockbench permite probar plugins cargando el archivo JavaScript desde el menú de plugins o usando una URL de desarrollo.
 
-For the current development build use:
+URL actual del plugin:
 
 ```text
 https://raw.githubusercontent.com/Sbtxx/blockbench-model-copilot/main/plugins/blockbench_model_copilot/blockbench_model_copilot.js
 ```
 
-After changing the plugin, reload it from Blockbench's Plugins menu.
+Después de actualizar el plugin en GitHub, pulsa **Recargar** en la pantalla de Plugins de Blockbench.
 
-## 🛠️ Development
+## 🛠️ Desarrollo
 
-Requirements:
+Requisitos:
 
-- Blockbench 5.x or newer
+- Blockbench 5.x o superior
 - Node.js 20+
 - npm
 
-Install development types:
+Instalar dependencias:
 
 ```bash
 npm install
 ```
 
-Run repository validation:
+Validar el repositorio:
 
 ```bash
 npm run validate
 ```
 
-The GitHub Actions workflow runs the validation script on pushes and pull requests.
+GitHub Actions ejecuta la validación automáticamente en pushes y pull requests.
 
 ## 🗺️ Roadmap
 
-- [x] In-Blockbench Copilot panel
-- [x] Safe blueprint operation layer
-- [x] Text-driven starter model generation
-- [x] AI provider integration
-- [x] AI model review
-- [x] Reference image input
-- [x] Teaching mode
-- [ ] Better proportion and symmetry reasoning
-- [ ] Multi-view reference support (front / side / back)
-- [ ] AI-assisted texture planning
-- [ ] Better hierarchy and bone suggestions
-- [ ] One-click safe fixes from review results
-- [ ] Public plugin release preparation
+- [x] Panel de Mikonode dentro de Blockbench
+- [x] Operaciones seguras mediante planes estructurados
+- [x] Generación básica desde texto
+- [x] Integración con proveedor de IA
+- [x] Revisión de modelos
+- [x] Entrada de imágenes de referencia
+- [x] Modo de aprendizaje
+- [x] Interfaz principal en español
+- [ ] Mejor razonamiento de proporciones y simetría
+- [ ] Referencias multi-vista (frontal / lateral / trasera)
+- [ ] Asistencia de texturas
+- [ ] Sugerencias de jerarquía y huesos
+- [ ] Correcciones seguras de un clic
+- [ ] Preparación para publicación pública como plugin
 
-## 📄 License
+## 📄 Licencia
 
-MIT License. See [LICENSE](LICENSE).
+MIT License. Consulta [LICENSE](LICENSE).

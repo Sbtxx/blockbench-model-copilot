@@ -4,7 +4,7 @@ Asistente de modelado con IA dentro de [Blockbench](https://www.blockbench.net/)
 
 **Mikonode** ayuda a convertir una idea, texto o referencia visual en un plan de geometría editable y revisable dentro de Blockbench. La IA propone operaciones estructuradas y Mikonode valida esas operaciones antes de tocar el proyecto.
 
-> **Estado:** desarrollo activo · versión `0.3.0`
+> **Estado:** desarrollo activo · versión `0.3.2`
 
 ## ✨ Qué hace
 
@@ -46,7 +46,7 @@ Los cambios se realizan dentro del sistema Undo de Blockbench.
 
 Mikonode no incluye una API key compartida. Cada usuario proporciona sus propias credenciales y paga su propio consumo del proveedor.
 
-La versión `0.3.0` admite dos formatos:
+La versión `0.3.x` admite dos formatos:
 
 - **OpenAI Responses:** endpoint por defecto `https://api.openai.com/v1/responses`.
 - **OpenAI Chat Completions / compatible:** útil para otros proveedores que mantengan ese formato.
@@ -88,7 +88,7 @@ Validar el repositorio:
 npm run validate
 ```
 
-GitHub Actions ejecuta la validación automáticamente en pushes y pull requests.
+La validación comprueba metadata, sintaxis, coherencia de versión y algunas reglas de seguridad básicas. GitHub Actions la ejecuta automáticamente en pushes y pull requests.
 
 ## 🧪 Probar el plugin
 
@@ -113,6 +113,7 @@ Después de actualizar el plugin en GitHub, recarga el plugin en Blockbench.
 - [x] Modo de aprendizaje
 - [x] Interfaz principal en español
 - [x] Prueba de conexión del proveedor
+- [ ] Diagnóstico detallado de errores de red y firewall
 - [ ] Proporciones y simetría avanzadas
 - [ ] Referencias multi-vista especializadas
 - [ ] Asistencia de texturas y UV
